@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // App data collections
+    match /users/{userId} {
+      allow read, write: if isValidId(userId);
+    }
+
+    match /customers/{customerId} {
+      allow read, write: if isValidId(customerId);
+    }
+
+    match /policies/{policyId} {
+      allow read, write: if isValidId(policyId);
+    }
+
+    match /properties/{propertyId} {
+      allow read, write: if isValidId(propertyId);
+    }
+
+    match /payments/{paymentId} {
+      allow read, write: if isValidId(paymentId);
+    }
+
+    match /leads/{leadId} {
+      allow read, write: if isValidId(leadId);
+    }
+
+    match /work_items/{itemId} {
+      allow read, write: if isValidId(itemId);
+    }
+
+    match /modules/{moduleId} {
+      allow read, write: if isValidId(moduleId);
+    }
+
+    match /records/{recordId} {
+      allow read, write: if isValidId(recordId);
+    }
+
+    match /audit_logs/{logId} {
+      allow read, write: if isValidId(logId);
+    }
+
+    // Connectivity test path
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

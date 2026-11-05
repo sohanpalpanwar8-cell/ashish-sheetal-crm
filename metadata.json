@@ -1,0 +1,7 @@
+{
+  "name": "Ashish Sheetal All-In-One",
+  "description": "Personal & Business Management Platform with Insurance, Property, CRM, Dynamic Module Builder, and Team Management",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

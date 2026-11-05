@@ -1,0 +1,102 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user account with role and 8-digit PIN credentials",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string" },
+        "pin": { "type": "string" },
+        "active": { "type": "boolean" },
+        "relationship": { "type": "string" }
+      },
+      "required": ["id", "name", "phone", "role"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer record with optional email and anniversary",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "mobile": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "anniversary": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "mobile", "assignedTo"]
+    },
+    "InsurancePolicy": {
+      "title": "InsurancePolicy",
+      "description": "Insurance policy record (LIC, motor, health, term)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "policyNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "insuranceType": { "type": "string" },
+        "premiumAmount": { "type": "number" },
+        "renewalDate": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "policyNumber", "customerName", "insuranceType"]
+    },
+    "PropertyListing": {
+      "title": "PropertyListing",
+      "description": "Real estate property inventory listing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "propertyType": { "type": "string" },
+        "dealType": { "type": "string" },
+        "askingPrice": { "type": "number" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "title", "propertyType", "dealType", "askingPrice"]
+    },
+    "PaymentRecord": {
+      "title": "PaymentRecord",
+      "description": "Payment and receipt transaction record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerName": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "paymentMode": { "type": "string" }
+      },
+      "required": ["id", "customerName", "amount", "status", "dueDate"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Collection of team members, managers, and admins"
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Collection of business customers and policyholders"
+    },
+    "/policies/{policyId}": {
+      "schema": { "$ref": "#/entities/InsurancePolicy" },
+      "description": "Collection of insurance policies"
+    },
+    "/properties/{propertyId}": {
+      "schema": { "$ref": "#/entities/PropertyListing" },
+      "description": "Collection of real estate properties"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/PaymentRecord" },
+      "description": "Collection of payment and receipt records"
+    }
+  }
+}
