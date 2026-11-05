@@ -28,6 +28,7 @@ import {
   Eye,
   RefreshCw,
   X,
+  Edit2,
 } from 'lucide-react';
 import { storage } from '../../services/storage';
 import { usePWAInstall } from '../../utils/usePWAInstall';
@@ -67,17 +68,66 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
   }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [isEditingCrmUser, setIsEditingCrmUser] = useState(false);
+  const [editCrmName, setEditCrmName] = useState('');
+  const [editCrmPin, setEditCrmPin] = useState('');
 
   const crmUser = users.find((u) => u.role === 'crm_executive') || users.find((u) => u.id === 'user_neha');
+  const crmDisplayName = (crmUser?.name || (language === 'hi' ? 'CRM टेलीकॉलर' : 'CRM Telecaller')).replace(/\s*\([^)]*\)/g, '').trim();
+  const crmShortName = crmDisplayName.split(' ')[0] || crmDisplayName;
+
+  const handleSaveCrmUser = () => {
+    if (!editCrmName.trim()) {
+      showToast(language === 'hi' ? 'कृपया नाम दर्ज करें!' : 'Please enter a name!', 'warning');
+      return;
+    }
+    if (editCrmPin.trim().length < 4 || editCrmPin.trim().length > 8) {
+      showToast(language === 'hi' ? 'पिन 4 से 8 अंकों का होना चाहिए!' : 'PIN must be 4 to 8 digits!', 'warning');
+      return;
+    }
+    const target = crmUser || {
+      id: 'user_neha',
+      role: 'crm_executive' as const,
+      email: 'crm@ashishsheetal.com',
+      phone: '',
+      relationship: 'CRM Telecaller & Calling Specialist',
+      active: true,
+      lastLogin: new Date().toISOString(),
+      permissions: {
+        canManageModules: false,
+        canManageTeam: false,
+        canViewAllData: true,
+        canDeleteRecords: false,
+        canExportData: false,
+        canManageSettings: false,
+        canEditCustomer: true,
+        canViewAuditLogs: false,
+      },
+    };
+    const updatedUser = {
+      ...target,
+      name: editCrmName.trim(),
+      pin: editCrmPin.trim(),
+    };
+    storage.updateUser(updatedUser, currentUser);
+    triggerRefresh();
+    setIsEditingCrmUser(false);
+    showToast(
+      language === 'hi'
+        ? `CRM ऑपरेटर का नाम बदलकर "${editCrmName.trim()}" कर दिया गया!`
+        : `Updated CRM Caller to "${editCrmName.trim()}"!`,
+      'success'
+    );
+  };
 
   const handleCopyCrmLink = () => {
     const appBaseUrl = typeof window !== 'undefined' && window.location.origin
       ? window.location.origin
-      : 'https://ais-pre-ck444risua2bw7pwfahpex-434697837812.asia-northeast1.run.app';
-    const crmId = crmUser ? crmUser.id : 'user_neha';
+      : 'https://ashish-sheetal-crm.vercel.app';
     const crmPin = crmUser?.pin || '77777777';
     const link = `${appBaseUrl}?portal=crm`;
-    const textToCopy = `नमस्ते ${crmUser?.name || 'नेहा'} जी,\n\nआशीष शीतल ऑल-इन-वन मैनेजमेंट प्लेटफॉर्म पर आपका CRM टेलीकॉलर वर्कस्पेस तैयार है।\n\n🔗 लॉगिन लिंक: ${link}\n🔑 आपका सीक्रेट 8-अंकीय लॉगिन पिन: ${crmPin}\n\nकृपया इस लिंक को Chrome ब्राउज़र में खोलकर अपना गुप्त पिन दर्ज करें और सभी एजेंटों के ग्राहकों की कॉलिंग लिस्ट, रिन्यूअल अलर्ट एवं फॉलो-अप देखें।\n\nसादर,\nआशीष Panwar (मालिक)`;
+    const textToCopy = `नमस्ते ${crmShortName} जी,\n\nआशीष शीतल ऑल-इन-वन मैनेजमेंट प्लेटफॉर्म पर आपका CRM टेलीकॉलर वर्कस्पेस तैयार है।\n\n🔗 लॉगिन लिंक: ${link}\n🔑 आपका सीक्रेट 8-अंकीय लॉगिन पिन: ${crmPin}\n\nकृपया इस लिंक को Chrome ब्राउज़र में खोलकर अपना गुप्त पिन दर्ज करें और सभी एजेंटों के ग्राहकों की कॉलिंग लिस्ट, रिन्यूअल अलर्ट एवं फॉलो-अप देखें।\n\nसादर,\nआशीष Panwar (मालिक)`;
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(textToCopy);
@@ -300,12 +350,17 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
           {/* Quick CRM Access Button for Owner/Admins */}
           {currentUser.role !== 'crm_executive' && (
             <button
-              onClick={() => setShowCrmModal(true)}
+              onClick={() => {
+                setIsEditingCrmUser(false);
+                setEditCrmName(crmDisplayName);
+                setEditCrmPin(crmUser?.pin || '77777777');
+                setShowCrmModal(true);
+              }}
               className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg bg-purple-600 hover:bg-purple-700 text-white shadow-sm shadow-purple-600/30 transition-all cursor-pointer"
-              title="CRM Telecaller Access & PIN (Neha Sharma)"
+              title={`CRM Telecaller Access & PIN (${crmDisplayName})`}
             >
               <PhoneCall className="w-3.5 h-3.5" />
-              <span>{language === 'hi' ? '📞 CRM (नेहा)' : '📞 CRM (Neha)'}</span>
+              <span>{`📞 CRM (${crmShortName})`}</span>
               <span className="hidden md:inline text-[10px] bg-purple-900/80 px-1.5 py-0.2 rounded font-mono font-bold">
                 {crmUser?.pin || '77777777'}
               </span>
@@ -314,30 +369,22 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
 
           {/* In-App Install Button for Mobile & Laptop */}
           {!isInstalled && (
-            <>
-              {isInstallable && (
-                <button
-                  onClick={install}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm transition-all"
-                  title="Install on Mobile / Laptop"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">
-                    {language === 'hi' ? 'ऐप इंस्टॉल करें' : 'Install App'}
-                  </span>
-                </button>
-              )}
-
-              {isIOS && (
-                <button
-                  onClick={() => setShowIOSGuide(true)}
-                  className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="hidden sm:inline">iPhone / iPad</span>
-                </button>
-              )}
-            </>
+            <button
+              onClick={() => {
+                if (isInstallable) {
+                  install();
+                } else {
+                  setShowInstallGuide(true);
+                }
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-sm transition-all cursor-pointer"
+              title="Install on Mobile / Laptop"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="inline">
+                {language === 'hi' ? 'ऐप इंस्टॉल करें' : 'Install App'}
+              </span>
+            </button>
           )}
 
           {/* Language Toggle */}
@@ -738,22 +785,62 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
         </div>
       )}
 
-      {/* iOS Safari Home Screen Guide */}
-      {showIOSGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-3">
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-              {language === 'hi' ? 'iPhone / iPad पर ऐप इंस्टॉल करें' : 'Install on iPhone / iPad'}
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              1. सफारी ब्राउज़र के नीचे स्थित <strong>Share (शेयर)</strong> बटन पर टैप करें।<br />
-              2. नीचे स्क्रॉल करके <strong>"Add to Home Screen" (होम स्क्रीन पर जोड़ें)</strong> चुनें।
-            </p>
+      {/* Unified App Install Guide Modal for Android Chrome & iOS Safari */}
+      {showInstallGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm rounded-3xl bg-slate-900 border border-amber-500/50 p-6 shadow-2xl text-white space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black">
+                  <Download className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">
+                    {language === 'hi' ? 'मोबाइल में ऐप इंस्टॉल करें' : 'Install App on Phone'}
+                  </h3>
+                  <span className="text-[10px] text-amber-400 font-semibold">
+                    Ashish Sheetal All-In-One CRM
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInstallGuide(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300">
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+                  <Smartphone className="w-4 h-4 text-amber-400" />
+                  {language === 'hi' ? 'Android / Chrome में इंस्टॉल कैसे करें:' : 'How to Install on Android Chrome:'}
+                </span>
+                <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-300 leading-relaxed">
+                  <li>Chrome के ऊपर दाएं कोने में <strong>3 बिन्दुओं (⋮)</strong> पर टैप करें।</li>
+                  <li>मेनू में <strong>"Install app" (ऐप इंस्टॉल करें)</strong> या <strong>"Add to Home screen" (होम स्क्रीन पर जोड़ें)</strong> पर दबाएं।</li>
+                  <li>स्क्रीन पर <strong>"Install"</strong> बटन दबाएं — यह सीधे आपके मोबाइल में असली ऐप की तरह इंस्टॉल हो जाएगी!</li>
+                </ol>
+              </div>
+
+              {isIOS && (
+                <div className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5">
+                  <span className="font-bold text-blue-400 text-xs">
+                    iPhone / iPad (Safari):
+                  </span>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    Safari में नीचे स्थित <strong>Share (शेयर)</strong> बटन दबाएं और <strong>"Add to Home Screen"</strong> चुनें।
+                  </p>
+                </div>
+              )}
+            </div>
+
             <button
-              onClick={() => setShowIOSGuide(false)}
-              className="mt-2 w-full py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs"
+              onClick={() => setShowInstallGuide(false)}
+              className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs cursor-pointer shadow"
             >
-              {language === 'hi' ? 'समझ गए (बंद करें)' : 'Got it'}
+              {language === 'hi' ? 'समझ गए (बंद करें)' : 'Got it (Close)'}
             </button>
           </div>
         </div>
@@ -770,7 +857,7 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-white flex items-center gap-2">
-                    <span>{crmUser?.name || 'Neha Sharma (CRM Telecaller)'}</span>
+                    <span>{crmUser?.name || 'CRM Telecaller'}</span>
                   </h3>
                   <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-full font-bold uppercase">
                     CRM Telecaller
@@ -778,45 +865,108 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
                 </div>
               </div>
 
-              <button
-                onClick={() => setShowCrmModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Description */}
-            <p className="text-xs text-purple-200/90 leading-relaxed">
-              {language === 'hi'
-                ? 'यह आपके कॉलिंग ऑपरेटर का सुरक्षित वर्कस्पेस है। वह सभी एजेंटों के ग्राहकों की कॉलिंग लिस्ट, प्रीमियम रिन्यूअल और फॉलो-अप कॉल कर सकती हैं।'
-                : 'Isolated workspace for CRM Telecaller. Has full access to calling queues across all agents without delete or admin rights.'}
-            </p>
-
-            {/* Secret PIN Box */}
-            <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-slate-400 block font-semibold">
-                  {language === 'hi' ? 'सीक्रेट लॉगिन पिन (Secret PIN):' : 'Secret Security PIN:'}
-                </span>
-                <span className="font-mono text-xs text-purple-300">
-                  {language === 'hi' ? 'यह कोड CRM को लॉगिन करने के लिए चाहिए' : 'Required to unlock workspace'}
-                </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setIsEditingCrmUser(!isEditingCrmUser)}
+                  className="px-2.5 py-1 text-xs font-bold rounded-lg bg-purple-800 hover:bg-purple-700 text-purple-200 border border-purple-600/50 flex items-center gap-1 cursor-pointer"
+                  title="नाम व पिन बदलें"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>{isEditingCrmUser ? (language === 'hi' ? 'रद्द' : 'Cancel') : (language === 'hi' ? 'नाम बदलें' : 'Edit')}</span>
+                </button>
+                <button
+                  onClick={() => setShowCrmModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <span className="font-mono font-black text-purple-300 bg-purple-500/20 border border-purple-500/30 px-3 py-1 rounded-xl text-base tracking-widest">
-                {crmUser?.pin || '77777777'}
-              </span>
             </div>
 
-            {/* Direct Link Box */}
-            <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-              <span className="text-[10px] text-slate-400 block font-semibold">
-                {language === 'hi' ? 'सीधा CRM लॉगिन लिंक (Direct Link):' : 'Direct CRM Login Link:'}
-              </span>
-              <p className="text-xs font-mono text-purple-200/80 break-all select-all bg-slate-900 p-2 rounded-xl border border-slate-800">
-                {`${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ais-pre-ck444risua2bw7pwfahpex-434697837812.asia-northeast1.run.app'}?portal=crm`}
-              </p>
-            </div>
+            {/* Inline Editor for CRM Caller Name and PIN */}
+            {isEditingCrmUser ? (
+              <div className="p-3.5 rounded-2xl bg-purple-950/80 border border-purple-500/50 space-y-3">
+                <h4 className="text-xs font-bold text-purple-200 flex items-center gap-1.5">
+                  <Edit2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{language === 'hi' ? 'कॉलर का नाम व लॉगिन पिन बदलें' : 'Edit Caller Name & Secret PIN'}</span>
+                </h4>
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[10px] text-purple-300 block mb-1 font-semibold">
+                      {language === 'hi' ? 'कॉलर का नाम (Caller Name):' : 'Caller Name:'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editCrmName}
+                      onChange={(e) => setEditCrmName(e.target.value)}
+                      placeholder="उदा. Anita, Pooja, आदि"
+                      className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-purple-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-purple-300 block mb-1 font-semibold">
+                      {language === 'hi' ? 'सीक्रेट 8-अंकीय लॉगिन पिन (PIN):' : 'Secret Security PIN:'}
+                    </label>
+                    <input
+                      type="text"
+                      value={editCrmPin}
+                      onChange={(e) => setEditCrmPin(e.target.value)}
+                      placeholder="77777777"
+                      maxLength={8}
+                      className="w-full px-3 py-1.5 text-xs font-mono font-bold tracking-widest bg-slate-900 border border-purple-700 rounded-xl text-amber-300 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={handleSaveCrmUser}
+                      className="flex-1 py-1.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs cursor-pointer shadow"
+                    >
+                      {language === 'hi' ? 'सुरक्षित करें (Save Name)' : 'Save Changes'}
+                    </button>
+                    <button
+                      onClick={() => setIsEditingCrmUser(false)}
+                      className="py-1.5 px-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs cursor-pointer"
+                    >
+                      {language === 'hi' ? 'रद्द करें' : 'Cancel'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Description */}
+                <p className="text-xs text-purple-200/90 leading-relaxed">
+                  {language === 'hi'
+                    ? 'यह आपके कॉलिंग ऑपरेटर का सुरक्षित वर्कस्पेस है। वह सभी एजेंटों के ग्राहकों की कॉलिंग लिस्ट, प्रीमियम रिन्यूअल और फॉलो-अप कॉल कर सकती हैं।'
+                    : 'Isolated workspace for CRM Telecaller. Has full access to calling queues across all agents without delete or admin rights.'}
+                </p>
+
+                {/* Secret PIN Box */}
+                <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-semibold">
+                      {language === 'hi' ? 'सीक्रेट लॉगिन पिन (Secret PIN):' : 'Secret Security PIN:'}
+                    </span>
+                    <span className="font-mono text-xs text-purple-300">
+                      {language === 'hi' ? 'यह कोड CRM को लॉगिन करने के लिए चाहिए' : 'Required to unlock workspace'}
+                    </span>
+                  </div>
+                  <span className="font-mono font-black text-purple-300 bg-purple-500/20 border border-purple-500/30 px-3 py-1 rounded-xl text-base tracking-widest">
+                    {crmUser?.pin || '77777777'}
+                  </span>
+                </div>
+
+                {/* Direct Link Box */}
+                <div className="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+                  <span className="text-[10px] text-slate-400 block font-semibold">
+                    {language === 'hi' ? 'सीधा CRM लॉगिन लिंक (Direct Link):' : 'Direct CRM Login Link:'}
+                  </span>
+                  <p className="text-xs font-mono text-purple-200/80 break-all select-all bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    {`${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ashish-sheetal-crm.vercel.app'}?portal=crm`}
+                  </p>
+                </div>
+              </>
+            )}
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
@@ -831,7 +981,7 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
               <a
                 href={generateWhatsAppUrl(
                   crmUser?.phone || '',
-                  `नमस्ते ${crmUser?.name || 'नेहा'} जी,\n\nआशीष शीतल ऑल-इन-वन मैनेजमेंट प्लेटफॉर्म पर आपका CRM टेलीकॉलर वर्कस्पेस तैयार है।\n\n🔗 लॉगिन लिंक: ${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ais-pre-ck444risua2bw7pwfahpex-434697837812.asia-northeast1.run.app'}?portal=crm\n🔑 आपका सीक्रेट 8-अंकीय लॉगिन पिन: ${crmUser?.pin || '77777777'}\n\nकृपया इस लिंक को Chrome ब्राउज़र में खोलें और अपना पिन दर्ज करके कॉलिंग लिस्ट और फॉलो-अप शुरू करें।\n\nसादर,\nआशीष Panwar (मालिक)`
+                  `नमस्ते ${crmShortName} जी,\n\nआशीष शीतल ऑल-इन-वन मैनेजमेंट प्लेटफॉर्म पर आपका CRM टेलीकॉलर वर्कस्पेस तैयार है।\n\n🔗 लॉगिन लिंक: ${typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ashish-sheetal-crm.vercel.app'}?portal=crm\n🔑 आपका सीक्रेट 8-अंकीय लॉगिन पिन: ${crmUser?.pin || '77777777'}\n\nकृपया इस लिंक को Chrome ब्राउज़र में खोलें और अपना पिन दर्ज करके कॉलिंग लिस्ट और फॉलो-अप शुरू करें।\n\nसादर,\nआशीष Panwar (मालिक)`
                 )}
                 target="_blank"
                 rel="noreferrer"
@@ -854,7 +1004,7 @@ export const Header: React.FC<{ onOpenMobileMenu?: () => void }> = ({ onOpenMobi
                 className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-purple-500/30 transition-all cursor-pointer"
               >
                 <Eye className="w-3.5 h-3.5" />
-                <span>{language === 'hi' ? 'CRM स्क्रीन देखें' : "Open Neha's View"}</span>
+                <span>{language === 'hi' ? `CRM (${crmShortName}) देखें` : `Open ${crmShortName}'s View`}</span>
               </button>
 
               <button

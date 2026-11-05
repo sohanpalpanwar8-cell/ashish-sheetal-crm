@@ -1,17 +1,32 @@
 {
+  "id": "/",
+  "name": "Ashish Sheetal All-In-One CRM",
   "short_name": "AshishSheetal",
-  "name": "Ashish Sheetal All-In-One Platform",
+  "description": "Ashish Sheetal All-In-One Personal & Business Management Platform",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090e1a",
+  "theme_color": "#090e1a",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ],
-  "start_url": "/",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
-  "display": "standalone",
-  "scope": "/",
-  "description": "Ashish Sheetal All-In-One Personal & Business Management Platform"
+  ]
 }

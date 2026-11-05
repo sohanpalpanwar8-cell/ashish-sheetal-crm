@@ -3,8 +3,8 @@ import App from './App.tsx';
 import './index.css';
 import './services/firebase.ts';
 
-// Register Service Worker for Offline PWA Support
-if ('serviceWorker' in navigator && process.env.NODE_ENV !== 'development') {
+// Register Service Worker for Offline PWA Support and Chromium Installability
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')

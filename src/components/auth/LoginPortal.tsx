@@ -301,7 +301,7 @@ export const LoginPortal: React.FC = () => {
           {showPinGuide && (
             <div className="mt-2 p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-[11px] text-slate-300 space-y-1">
               <p>👑 <strong>Ashish / Sheetal (मालिक Admin):</strong> PIN <code className="bg-slate-950 px-1.5 py-0.5 rounded text-amber-400 font-bold font-mono">12345678</code></p>
-              <p>📞 <strong>Neha (CRM टेलीकॉलर):</strong> PIN <code className="bg-slate-950 px-1.5 py-0.5 rounded text-purple-400 font-bold font-mono">77777777</code></p>
+              <p>📞 <strong>{(users.find((u) => u.role === 'crm_executive')?.name || 'CRM Telecaller').replace(/\s*\([^)]*\)/g, '').trim()} (CRM टेलीकॉलर):</strong> PIN <code className="bg-slate-950 px-1.5 py-0.5 rounded text-purple-400 font-bold font-mono">{users.find((u) => u.role === 'crm_executive')?.pin || '77777777'}</code></p>
               <p>🔒 <strong>Priya (फील्ड एजेंट):</strong> PIN <code className="bg-slate-950 px-1.5 py-0.5 rounded text-blue-400 font-bold font-mono">44444444</code></p>
               <p>🔒 <strong>Rahul (फील्ड एजेंट):</strong> PIN <code className="bg-slate-950 px-1.5 py-0.5 rounded text-blue-400 font-bold font-mono">55555555</code></p>
               <p>💼 <strong>Vikram (मैनेजर):</strong> PIN <code className="bg-slate-950 px-1.5 py-0.5 rounded text-emerald-400 font-bold font-mono">33333333</code></p>
